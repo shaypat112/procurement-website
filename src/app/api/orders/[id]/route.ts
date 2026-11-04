@@ -5,6 +5,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!["ORDERED", "DELIVERED"].includes(status)) return NextResponse.json({ error: "Invalid next status." }, { status: 400 });
   try {
     const updated = await prisma.$transaction(async tx => {
+      const initial = await tx.procurementOrder.findUnique({ where: { id } });
+      if (!initial) return null;
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${initial.catalogId}))`;
       const current = await tx.procurementOrder.findUnique({ where: { id } });
       if (!current) return null;
       if (current.status === status) return current;

@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { sessionCookie, verifySession } from "@/lib/auth";
-export async function GET() { return NextResponse.json(await prisma.inventoryAudit.findMany({ include: { catalog: true }, orderBy: { checkedAt: "desc" }, take: 100 })); }
+export async function GET() {
+  try { return NextResponse.json(await prisma.inventoryAudit.findMany({ include: { catalog: true }, orderBy: { checkedAt: "desc" }, take: 100 })); }
+  catch { return NextResponse.json({ error: "Inventory history is unavailable." }, { status: 503 }); }
+}
 export async function POST(req: Request) {
   const session = await verifySession((await cookies()).get(sessionCookie)?.value);
   if (!session) return NextResponse.json({ error: "Sign in required." }, { status: 401 });

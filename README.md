@@ -19,11 +19,11 @@ Create a Discord application in the [Discord Developer Portal](https://discord.c
 
 Visitors sign in with their Discord account before accessing the app or its API. The top-right sign-out button ends the session. For a public deployment, update `APP_URL` and the Discord redirect URL to the deployed HTTPS domain.
 
-The unauthenticated `/api/health` endpoint reports whether PostgreSQL is connected and whether Discord and S3 configuration is present. It never returns credentials.
+The unauthenticated `/api/health` endpoint reports whether PostgreSQL is connected, whether Discord is configured, and whether files use S3 or local storage. It never returns credentials.
 
 Edit files in `src/` on your computer. The source directory is mounted into the `web` container, so Next.js reloads when files change. The database uses a named Docker volume and survives `docker compose down`. To stop the app, press Ctrl+C or run `docker compose down` in another terminal. To reset all local database data, run `docker compose down -v`.
 
-Optional settings are in `.env`: `APP_PORT`, `DB_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and the AWS S3 variables. Compose sets its own `DATABASE_URL` using the `db` service name. It also publishes PostgreSQL to `127.0.0.1:${DB_PORT:-5432}` so a locally running app can use the `localhost` URL in `.env`. Keep that URL's user, password, port, and database in sync with the Compose settings. If you change PostgreSQL credentials after the database volume was created, recreate that volume or use the original credentials. After changing `package.json`, run `docker compose up --build --renew-anon-volumes` so the container picks up the new dependencies.
+Optional settings are in `.env`: `APP_PORT`, `DB_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and the AWS S3 variables. Compose sets its own `DATABASE_URL` using the `db` service name. It also publishes PostgreSQL to `127.0.0.1:${DB_PORT:-5432}` so a locally running app can use the `localhost` URL in `.env`. Keep that URL's user, password, port, and database in sync with the Compose settings. If port 5432 is already in use, set `DB_PORT=5433` and use `localhost:5433` in `DATABASE_URL`. Restart `npm run dev` after changing `.env`. If you change PostgreSQL credentials after the database volume was created, recreate that volume or use the original credentials. After changing `package.json`, run `docker compose up --build --renew-anon-volumes` so the container picks up the new dependencies.
 
 ## Run locally
 
@@ -33,7 +33,7 @@ Optional settings are in `.env`: `APP_PORT`, `DB_PORT`, `POSTGRES_USER`, `POSTGR
 4. Create the database tables: `npm run db:push`.
 5. Start the app: `npm run dev`
 
-The app opens at `http://localhost:3000`. Item file uploads use short-lived presigned S3 PUT URLs. The bucket must allow browser PUT requests from the app's origin through its CORS policy. Use an IAM principal scoped to the target bucket's `inventory/*` object keys.
+The app opens at `http://localhost:3000`. Without a real S3 bucket, item files are stored in `.data/inventory/` locally (ignored by Git). For a deployment, configure S3 for durable shared files. S3 uploads use short-lived presigned PUT URLs. The bucket must allow browser PUT requests from the app's origin through its CORS policy. Use an IAM principal scoped to the target bucket's `inventory/*` object keys.
 
 ## Activity Terrain component
 
@@ -72,7 +72,7 @@ Each widget has a unique `id`, a title, optional icon, a `render` function, and 
 
 The Next.js App Router pages are `/` (overview), `/catalog`, `/catalog/new`, `/orders`, `/orders/new`, `/inventory`, and `/help`. API route handlers live under `src/app/api/`; the shared interactive workspace lives under `src/components/`, and editable shadcn component source lives under `src/components/ui/`.
 
-- **Catalog:** Add canonical item names, SKUs, category, supplier, description, cost, and product URL.
+- **Catalog:** Name a part by type, size, and key specification, using consistent units; enter the supplier part number when available. Names and part numbers are checked case-insensitively to prevent duplicate catalog entries. Save category, supplier, description, cost, and product URL once for reuse.
 - **Orders:** Select a catalog item and quantity. Discord supplies the requester identity. The app warns about active orders; confirming stacks quantity onto a pending order for the same subsystem, otherwise it records a separate request. Every requester is recorded under a stacked order and sees it on their dashboard.
 - **Order sheet:** Robbie or a student can move an order through Pending, Ordered, and Delivered. Pending orders can accumulate; Ordered orders are closed to stacking. Delivered orders are added to inventory in the same database transaction.
 - **Inventory:** One on-hand quantity is kept per catalog item. Delivered orders add to that quantity. Attach files in S3 and open them from the inventory page.
