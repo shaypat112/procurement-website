@@ -1,0 +1,46 @@
+name: zone-supply
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-zone_supply}:${POSTGRES_PASSWORD:-zone_supply_dev}@db:5432/${POSTGRES_DB:-zone_supply}?schema=public
+      AWS_REGION: ${AWS_REGION:-}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npx prisma generate && npx prisma db push && npm run dev -- --hostname 0.0.0.0"
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-zone_supply}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zone_supply_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-zone_supply}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-zone_supply} -d ${POSTGRES_DB:-zone_supply}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:

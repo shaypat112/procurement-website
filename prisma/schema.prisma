@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model CatalogItem {
+  id          String   @id @default(cuid())
+  name        String
+  sku         String?  @unique
+  category    String?
+  description String?
+  supplier    String?
+  unitCost    Decimal? @db.Decimal(10, 2)
+  url         String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  orders      ProcurementOrder[]
+  inventory   InventoryItem?
+  audits      InventoryAudit[]
+}
+
+model ProcurementOrder {
+  id          String   @id @default(cuid())
+  catalogId   String
+  catalog     CatalogItem @relation(fields: [catalogId], references: [id])
+  quantity    Int      @default(1)
+  status      String   @default("PENDING")
+  placedBy    String
+  requesterId String?
+  subsystem   String?
+  notes       String?
+  orderedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deliveredAt DateTime?
+  requests    OrderRequest[]
+  @@index([catalogId, status])
+  @@index([requesterId])
+}
+
+model OrderRequest {
+  id            String   @id @default(cuid())
+  orderId       String
+  order         ProcurementOrder @relation(fields: [orderId], references: [id])
+  requesterId   String
+  requesterName String
+  quantity      Int
+  subsystem     String?
+  createdAt     DateTime @default(now())
+  @@index([requesterId])
+}
+
+model InventoryItem {
+  id          String   @id @default(cuid())
+  catalogId   String   @unique
+  catalog     CatalogItem @relation(fields: [catalogId], references: [id])
+  quantity    Int      @default(1)
+  location    String?
+  details     String?
+  fileKey     String?
+  fileName    String?
+  addedAt     DateTime @default(now())
+  checkedAt   DateTime?
+}
+
+model InventoryAudit {
+  id        String   @id @default(cuid())
+  catalogId String
+  catalog   CatalogItem @relation(fields: [catalogId], references: [id])
+  quantity  Int
+  checkedBy String
+  notes     String?
+  checkedAt DateTime @default(now())
+}

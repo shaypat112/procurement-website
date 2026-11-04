@@ -1,0 +1,23 @@
+@import "tailwindcss";
+:root { color-scheme: dark; --bg: #050505; --sidebar: #090909; --panel: #101010; --field: #161616; --text: #f5f5f5; --muted: #a3a3a3; --faint: #737373; --border: #292929; --accent: #e5e5e5; --accent-foreground: #111111; }
+:root[data-theme="light"] { color-scheme: light; --bg: #fafafa; --sidebar: #ffffff; --panel: #ffffff; --field: #f4f4f5; --text: #18181b; --muted: #52525b; --faint: #71717a; --border: #e4e4e7; --accent: #18181b; --accent-foreground: #ffffff; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+button, input, select, textarea { font: inherit; }
+::selection { background: var(--accent); color: var(--accent-foreground); }
+.field { width: 100%; border: 1px solid var(--border); border-radius: 8px; background: var(--field); padding: 10px 12px; color: var(--text); font-size: 12px; outline: none; transition: border-color .15s, box-shadow .15s; }
+.field::placeholder { color: var(--faint); }
+.field:focus { border-color: var(--muted); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 9%, transparent); }
+.field option { background: var(--field); }
+.login-terrain { --terrain-0: #242424; --terrain-1: #474747; --terrain-2: #737373; --terrain-3: #a3a3a3; --terrain-4: #e5e5e5; --terrain-accent: #e5e5e5; --terrain-text: #a3a3a3; }
+:root[data-theme="light"] .login-terrain { --terrain-0: #f4f4f5; --terrain-1: #d4d4d8; --terrain-2: #a1a1aa; --terrain-3: #52525b; --terrain-4: #18181b; --terrain-accent: #18181b; --terrain-text: #71717a; }
+.login-terrain > div:first-child > div:last-child { background: var(--panel); }
+.login-terrain button[aria-pressed="true"] { background: var(--field); color: var(--text); }
+.login-terrain button[aria-pressed="false"] { color: var(--muted); }
+@media (max-width: 767px) {
+  .sheet-scroll > div { min-width: 720px; }
+  .login-terrain canvas { height: 12rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
